@@ -14,7 +14,7 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 .clock small{display:block;font-size:12px;color:#5a8ab0;font-weight:400;letter-spacing:0;text-align:right;}
 .col-heads{display:grid;grid-template-columns:110px 1fr 180px;padding:8px 28px;background:#0d2244;border-bottom:1px solid #162e50;}
 .col-heads span{font-size:11px;font-weight:700;letter-spacing:1.5px;color:#3a6a90;text-transform:uppercase;}
-.col-heads span:last-child{text-align:center;}
+.col-heads span:last-child{text-align:center;line-height:1.6;}
 .row{display:grid;grid-template-columns:110px 1fr 180px;align-items:center;padding:0 28px;min-height:80px;border-bottom:1px solid #102035;}
 .row:nth-child(odd){background:#0d1e38;}
 .row:nth-child(even){background:#0b1a2e;}
@@ -57,7 +57,7 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 <div class="col-heads">
   <span>Bus / Λεωφορείο</span>
   <span>Destination / Προορισμός</span>
-  <span style="text-align:center;">Arrives in / Φτάνει σε</span>
+  <span style="text-align:center;">Arrives in<br>Φτάνει σε</span>
 </div>
 
 <div id="list"></div>
@@ -70,39 +70,26 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 
 <script>
 const schedule = [
-  { line:'425', en:'Nicosia — Central Station', gr:'Λευκωσία — Κεντρικός Σταθμός', time:'06:15' },
-  { line:'410', en:'Larnaca Airport',            gr:'Αεροδρόμιο Λάρνακας',          time:'06:40' },
-  { line:'412', en:'Agia Napa',                  gr:'Αγία Νάπα',                    time:'07:00' },
-  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'07:20' },
-  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'07:45' },
-  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'08:15' },
-  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'08:40' },
-  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'09:00' },
-  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'09:30' },
-  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'10:15' },
-  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'10:45' },
-  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'11:10' },
-  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'11:40' },
-  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'12:00' },
-  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'12:30' },
-  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'13:00' },
-  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'13:30' },
-  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'14:00' },
-  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'14:30' },
-  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'15:15' },
-  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'15:45' },
-  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'16:10' },
-  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'16:40' },
-  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'17:15' },
-  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'17:45' },
-  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'18:10' },
-  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'18:40' },
-  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'19:00' },
-  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'19:30' },
-  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'20:00' },
-  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'20:30' },
-  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'21:00' },
-  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'21:30' },
+  { line:'425', en:'Nicosia — Central Station', gr:'Λευκωσία — Κεντρικός Σταθμός', time:'15:35' },
+  { line:'410', en:'Larnaca Airport',            gr:'Αεροδρόμιο Λάρνακας',          time:'15:50' },
+  { line:'416', en:'Larnaca Town Centre',        gr:'Κέντρο Λάρνακας',              time:'16:05' },
+  { line:'412', en:'Agia Napa',                  gr:'Αγία Νάπα',                    time:'16:20' },
+  { line:'404', en:'Limassol',                   gr:'Λεμεσός',                      time:'16:40' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'17:00' },
+  { line:'410', en:'Larnaca Airport',            gr:'Αεροδρόμιο Λάρνακας',          time:'17:20' },
+  { line:'416', en:'Larnaca Town Centre',        gr:'Κέντρο Λάρνακας',              time:'17:40' },
+  { line:'412', en:'Agia Napa',                  gr:'Αγία Νάπα',                    time:'18:00' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'18:20' },
+  { line:'404', en:'Limassol',                   gr:'Λεμεσός',                      time:'18:40' },
+  { line:'410', en:'Larnaca Airport',            gr:'Αεροδρόμιο Λάρνακας',          time:'19:00' },
+  { line:'416', en:'Larnaca Town Centre',        gr:'Κέντρο Λάρνακας',              time:'19:20' },
+  { line:'412', en:'Agia Napa',                  gr:'Αγία Νάπα',                    time:'19:40' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'20:00' },
+  { line:'404', en:'Limassol',                   gr:'Λεμεσός',                      time:'20:20' },
+  { line:'410', en:'Larnaca Airport',            gr:'Αεροδρόμιο Λάρνακας',          time:'20:40' },
+  { line:'416', en:'Larnaca Town Centre',        gr:'Κέντρο Λάρνακας',              time:'21:00' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'21:20' },
+  { line:'412', en:'Agia Napa',                  gr:'Αγία Νάπα',                    time:'21:40' },
 ];
 
 const PAGE_SIZE = 4;
@@ -120,7 +107,7 @@ function getMinsUntil(timeStr) {
 function getVisible() {
   return schedule
     .map(b => ({ ...b, mins: getMinsUntil(b.time) }))
-    .filter(b => b.mins > -1 && b.mins < 30)
+    .filter(b => b.mins > -1 && b.mins < 40)
     .sort((a, b) => a.mins - b.mins);
 }
 
@@ -140,7 +127,7 @@ function render() {
   }
 
   if (!visible.length) {
-    document.getElementById('list').innerHTML = '<div class="no-buses">No buses in the next 30 minutes<br><span style="font-size:14px;font-weight:400;color:#3a6a90;">Δεν υπάρχουν λεωφορεία τα επόμενα 30 λεπτά</span></div>';
+    document.getElementById('list').innerHTML = '<div class="no-buses">No buses in the next 40 minutes<br><span style="font-size:14px;font-weight:400;color:#3a6a90;">Δεν υπάρχουν λεωφορεία τα επόμενα 40 λεπτά</span></div>';
     return;
   }
 
