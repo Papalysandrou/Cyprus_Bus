@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cyprus Bus Display — Limassol Old Port</title>
+<title>Cyprus Bus Display — Larnaka Nautical Club</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;}
@@ -14,6 +14,7 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 .clock small{display:block;font-size:12px;color:#5a8ab0;font-weight:400;letter-spacing:0;text-align:right;}
 .col-heads{display:grid;grid-template-columns:110px 1fr 180px;padding:8px 28px;background:#0d2244;border-bottom:1px solid #162e50;}
 .col-heads span{font-size:11px;font-weight:700;letter-spacing:1.5px;color:#3a6a90;text-transform:uppercase;}
+.col-heads span:last-child{text-align:center;}
 .row{display:grid;grid-template-columns:110px 1fr 180px;align-items:center;padding:0 28px;min-height:80px;border-bottom:1px solid #102035;}
 .row:nth-child(odd){background:#0d1e38;}
 .row:nth-child(even){background:#0b1a2e;}
@@ -44,8 +45,8 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 
 <div class="hdr">
   <div class="stop-name">
-    Limassol — Old Port
-    <small>Λεμεσός — Παλιό Λιμάνι &nbsp;·&nbsp; Stop CY-LIM-001</small>
+    Larnaka — Nautical Club
+    <small>Λάρνακα — Ναυτικός Όμιλος &nbsp;·&nbsp; Stop CY-LAR-012</small>
   </div>
   <div class="clock">
     <span id="clk">00:00</span>
@@ -56,7 +57,7 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 <div class="col-heads">
   <span>Bus / Λεωφορείο</span>
   <span>Destination / Προορισμός</span>
-  <span style="text-align:center;">Arrives in / Σε</span>
+  <span style="text-align:center;">Arrives in / Φτάνει σε</span>
 </div>
 
 <div id="list"></div>
@@ -68,95 +69,127 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 </div>
 
 <script>
-const buses=[
-  {line:'410', en:'Larnaca Airport',    gr:'Αεροδρόμιο Λάρνακας',  mins:0.4},
-  {line:'425', en:'Nicosia',            gr:'Λευκωσία',              mins:6},
-  {line:'412', en:'Agia Napa',          gr:'Αγία Νάπα',            mins:14},
-  {line:'431', en:'Limassol',           gr:'Λεμεσός',              mins:22},
-  {line:'419', en:'Paralimni',          gr:'Παραλίμνι',            mins:28},
-  {line:'440', en:'Protaras',           gr:'Πρωταράς',             mins:35},
+const schedule = [
+  { line:'425', en:'Nicosia — Central Station', gr:'Λευκωσία — Κεντρικός Σταθμός', time:'06:15' },
+  { line:'410', en:'Larnaca Airport',            gr:'Αεροδρόμιο Λάρνακας',          time:'06:40' },
+  { line:'412', en:'Agia Napa',                  gr:'Αγία Νάπα',                    time:'07:00' },
+  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'07:20' },
+  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'07:45' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'08:15' },
+  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'08:40' },
+  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'09:00' },
+  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'09:30' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'10:15' },
+  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'10:45' },
+  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'11:10' },
+  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'11:40' },
+  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'12:00' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'12:30' },
+  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'13:00' },
+  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'13:30' },
+  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'14:00' },
+  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'14:30' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'15:15' },
+  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'15:45' },
+  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'16:10' },
+  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'16:40' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'17:15' },
+  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'17:45' },
+  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'18:10' },
+  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'18:40' },
+  { line:'412', en:'Agia Napa',                   gr:'Αγία Νάπα',                    time:'19:00' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'19:30' },
+  { line:'404', en:'Limassol',                    gr:'Λεμεσός',                      time:'20:00' },
+  { line:'410', en:'Larnaca Airport',             gr:'Αεροδρόμιο Λάρνακας',          time:'20:30' },
+  { line:'416', en:'Larnaca Town Centre',         gr:'Κέντρο Λάρνακας',              time:'21:00' },
+  { line:'425', en:'Nicosia — Central Station',  gr:'Λευκωσία — Κεντρικός Σταθμός', time:'21:30' },
 ];
 
-const PAGE_SIZE=4;
-let offsets=buses.map(b=>b.mins);
-let lastTick=Date.now();
-let currentPage=0;
-let pageTimer=null;
+const PAGE_SIZE = 4;
+let currentPage = 0;
+let pageTimer = null;
 
-function getVisible(){
-  const now=Date.now();
-  const elapsed=(now-lastTick)/60000;
-  offsets=offsets.map(o=>Math.max(0,o-elapsed));
-  lastTick=now;
-  return buses
-    .map((b,i)=>({...b,mins:offsets[i]}))
-    .filter(b=>b.mins<30)
-    .sort((a,b)=>a.mins-b.mins);
+function getMinsUntil(timeStr) {
+  const now = new Date();
+  const [h, m] = timeStr.split(':').map(Number);
+  const then = new Date(now);
+  then.setHours(h, m, 0, 0);
+  return (then - now) / 60000;
 }
 
-function render(){
-  const visible=getVisible();
-  const totalPages=Math.max(1,Math.ceil(visible.length/PAGE_SIZE));
-  if(currentPage>=totalPages) currentPage=0;
-  const page=visible.slice(currentPage*PAGE_SIZE,(currentPage+1)*PAGE_SIZE);
+function getVisible() {
+  return schedule
+    .map(b => ({ ...b, mins: getMinsUntil(b.time) }))
+    .filter(b => b.mins > -1 && b.mins < 30)
+    .sort((a, b) => a.mins - b.mins);
+}
 
-  const dotsEl=document.getElementById('dots');
-  if(totalPages>1){
-    dotsEl.innerHTML=Array.from({length:totalPages},(_,i)=>`<div class="dot${i===currentPage?' active':''}"></div>`).join('');
-    dotsEl.style.display='flex';
+function render() {
+  const visible = getVisible();
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  if (currentPage >= totalPages) currentPage = 0;
+  const page = visible.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+
+  const dotsEl = document.getElementById('dots');
+  if (totalPages > 1) {
+    dotsEl.innerHTML = Array.from({length: totalPages}, (_, i) =>
+      `<div class="dot${i === currentPage ? ' active' : ''}"></div>`).join('');
+    dotsEl.style.display = 'flex';
   } else {
-    dotsEl.style.display='none';
+    dotsEl.style.display = 'none';
   }
 
-  if(!visible.length){
-    document.getElementById('list').innerHTML='<div class="no-buses">No buses in the next 30 minutes<br><span style="font-size:14px;font-weight:400;color:#3a6a90;">Δεν υπάρχουν λεωφορεία τα επόμενα 30 λεπτά</span></div>';
+  if (!visible.length) {
+    document.getElementById('list').innerHTML = '<div class="no-buses">No buses in the next 30 minutes<br><span style="font-size:14px;font-weight:400;color:#3a6a90;">Δεν υπάρχουν λεωφορεία τα επόμενα 30 λεπτά</span></div>';
     return;
   }
 
-  document.getElementById('list').innerHTML=page.map(b=>{
-    const isNow=b.mins<1;
-    const cls=isNow?'mins-now':b.mins<=10?'mins-soon':b.mins<=20?'mins-later':'mins-far';
-    const label=isNow?'NOW / ΤΩΡΑ':Math.round(b.mins)+' min';
-    return `<div class="row${isNow?' now-row':''}">
+  document.getElementById('list').innerHTML = page.map(b => {
+    const isNow = b.mins < 1;
+    const cls = isNow ? 'mins-now' : b.mins <= 10 ? 'mins-soon' : b.mins <= 20 ? 'mins-later' : 'mins-far';
+    const label = isNow ? 'NOW / ΤΩΡΑ' : Math.round(b.mins) + ' min';
+    return `<div class="row${isNow ? ' now-row' : ''}">
       <div class="line-num">${b.line}</div>
       <div class="destination">
         <div class="dest-en">${b.en}</div>
         <div class="dest-gr">${b.gr}</div>
       </div>
       <div class="mins-col">
-        ${isNow?'<div class="arrows">&#8964;<br>&#8964;</div>':''}
+        ${isNow ? '<div class="arrows">&#8964;<br>&#8964;</div>' : ''}
         <div class="mins-num ${cls}">${label}</div>
       </div>
     </div>`;
   }).join('');
 }
 
-function schedulePage(){
+function schedulePage() {
   clearTimeout(pageTimer);
-  const delay=currentPage===0?15000:10000;
-  pageTimer=setTimeout(()=>{
-    const visible=getVisible();
-    const total=Math.max(1,Math.ceil(visible.length/PAGE_SIZE));
-    if(total>1){
-      currentPage=(currentPage+1)%total;
+  const delay = currentPage === 0 ? 15000 : 10000;
+  pageTimer = setTimeout(() => {
+    const visible = getVisible();
+    const total = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+    if (total > 1) {
+      currentPage = (currentPage + 1) % total;
       render();
     }
     schedulePage();
-  },delay);
+  }, delay);
 }
 
-function tick(){
-  const n=new Date();
-  document.getElementById('clk').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('dt').textContent=days[n.getDay()]+' '+n.getDate()+' '+months[n.getMonth()];
+function tick() {
+  const n = new Date();
+  document.getElementById('clk').textContent =
+    String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('dt').textContent =
+    days[n.getDay()] + ' ' + n.getDate() + ' ' + months[n.getMonth()];
   render();
 }
 
 tick();
 schedulePage();
-setInterval(tick,15000);
+setInterval(tick, 15000);
 </script>
 </body>
 </html>
