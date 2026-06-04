@@ -10,8 +10,14 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 .hdr{background:#0d2244;border-bottom:3px solid #00aaff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;}
 .stop-name{color:#fff;font-size:22px;font-weight:900;letter-spacing:1px;}
 .stop-name small{display:block;font-size:13px;font-weight:400;color:#5a8ab0;margin-top:3px;letter-spacing:0;}
-.clock{color:#00aaff;font-size:36px;font-weight:900;letter-spacing:2px;text-align:right;}
+.hdr-right{text-align:right;}
+.clock{color:#00aaff;font-size:36px;font-weight:900;letter-spacing:2px;}
 .clock small{display:block;font-size:12px;color:#5a8ab0;font-weight:400;letter-spacing:0;text-align:right;}
+.weather{margin-top:6px;font-size:15px;font-weight:700;color:#fff;text-align:right;letter-spacing:0.5px;}
+.weather span{color:#00aaff;}
+.alert-bar{background:#7a4a00;border-top:2px solid #ffa500;border-bottom:2px solid #ffa500;padding:10px 0;overflow:hidden;white-space:nowrap;}
+.alert-inner{display:inline-block;animation:scroll 35s linear infinite;padding-left:100%;}
+@keyframes scroll{0%{transform:translateX(0);}100%{transform:translateX(-100%);}}.alert-inner span{color:#ffa500;font-size:13px;font-weight:700;letter-spacing:0.8px;margin-right:80px;}
 .col-heads{display:grid;grid-template-columns:110px 1fr 180px;padding:8px 28px;background:#0d2244;border-bottom:1px solid #162e50;}
 .col-heads span{font-size:11px;font-weight:700;letter-spacing:1.5px;color:#3a6a90;text-transform:uppercase;}
 .col-heads span:last-child{text-align:center;line-height:1.6;}
@@ -48,9 +54,18 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
     Larnaka — Nautical Club
     <small>Λάρνακα — Ναυτικός Όμιλος &nbsp;·&nbsp; Stop CY-LAR-012</small>
   </div>
-  <div class="clock">
-    <span id="clk">00:00</span>
-    <small id="dt"></small>
+  <div class="hdr-right">
+    <div class="clock"><span id="clk">00:00</span><small id="dt"></small></div>
+    <div class="weather" id="weather">🌡️ Loading...</div>
+  </div>
+</div>
+
+<div class="alert-bar">
+  <div class="alert-inner">
+    <span>⚠️ Works in Larnaka town centre may cause delays on routes 424 and 425</span>
+    <span>⚠️ Εργασίες στο κέντρο Λάρνακας ενδέχεται να προκαλέσουν καθυστερήσεις στις γραμμές 424 και 425</span>
+    <span>⚠️ Works in Larnaka town centre may cause delays on routes 424 and 425</span>
+    <span>⚠️ Εργασίες στο κέντρο Λάρνακας ενδέχεται να προκαλέσουν καθυστερήσεις στις γραμμές 424 και 425</span>
   </div>
 </div>
 
@@ -186,6 +201,29 @@ const schedule = rawSchedule.map(r => ({
 const PAGE_SIZE = 4;
 let currentPage = 0;
 let pageTimer = null;
+
+// Weather
+async function fetchWeather() {
+  try {
+    const res = await fetch('https://wttr.in/Larnaca?format=j1');
+    const data = await res.json();
+    const temp = data.current_condition[0].temp_C;
+    const desc = data.current_condition[0].weatherDesc[0].value;
+    const icons = {
+      'Sunny':'☀️','Clear':'🌙','Partly cloudy':'⛅','Cloudy':'☁️',
+      'Overcast':'☁️','Mist':'🌫️','Rain':'🌧️','Light rain':'🌦️',
+      'Heavy rain':'⛈️','Thunder':'⛈️','Snow':'❄️','Fog':'🌫️',
+      'Light drizzle':'🌦️','Patchy rain possible':'🌦️'
+    };
+    const icon = Object.entries(icons).find(([k]) => desc.includes(k))?.[1] || '🌡️';
+    document.getElementById('weather').innerHTML = `${icon} <span>${temp}°C</span> &nbsp;·&nbsp; ${desc}`;
+  } catch(e) {
+    document.getElementById('weather').innerHTML = '🌡️ Larnaka, CY';
+  }
+}
+
+fetchWeather();
+setInterval(fetchWeather, 600000); // refresh every 10 mins
 
 function getMinsUntil(h, m) {
   const now = new Date();
