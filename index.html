@@ -8,49 +8,49 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;}
-.hdr{background:#0d2244;border-bottom:3px solid #00aaff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;}
-.stop-name{color:#fff;font-size:22px;font-weight:900;letter-spacing:1px;}
-.stop-name small{display:block;font-size:13px;font-weight:400;color:#5a8ab0;margin-top:3px;letter-spacing:0;}
-.hdr-right{text-align:right;display:flex;align-items:center;gap:20px;}
+.hdr{background:#0d2244;border-bottom:3px solid #00aaff;padding:22px 32px;display:flex;align-items:center;justify-content:space-between;}
+.stop-name{color:#fff;font-size:30px;font-weight:900;letter-spacing:1px;}
+.stop-name small{display:block;font-size:17px;font-weight:400;color:#5a8ab0;margin-top:5px;letter-spacing:0;}
+.hdr-right{text-align:right;display:flex;align-items:center;gap:24px;}
 .clock-wrap{text-align:right;}
-.clock{color:#00aaff;font-size:36px;font-weight:900;letter-spacing:2px;}
-.clock small{display:block;font-size:12px;color:#5a8ab0;font-weight:400;letter-spacing:0;text-align:right;}
-.weather{margin-top:6px;font-size:15px;font-weight:700;color:#fff;text-align:right;letter-spacing:0.5px;}
+.clock{color:#00aaff;font-size:48px;font-weight:900;letter-spacing:2px;}
+.clock small{display:block;font-size:17px;color:#5a8ab0;font-weight:400;letter-spacing:0;text-align:right;margin-top:2px;}
+.weather{margin-top:8px;font-size:19px;font-weight:700;color:#fff;text-align:right;letter-spacing:0.5px;}
 .weather span{color:#00aaff;}
-.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.qr-wrap canvas, .qr-wrap img{border-radius:6px;border:2px solid #00aaff;}
-.qr-label{font-size:9px;font-weight:700;color:#5a8ab0;letter-spacing:0.8px;text-transform:uppercase;text-align:center;line-height:1.3;}
+.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.qr-wrap canvas,.qr-wrap img{border-radius:6px;border:2px solid #00aaff;}
+.qr-label{font-size:11px;font-weight:700;color:#5a8ab0;letter-spacing:0.8px;text-transform:uppercase;text-align:center;line-height:1.4;}
 .alert-bar{background:#7a4a00;border-top:2px solid #ffa500;border-bottom:2px solid #ffa500;padding:10px 0;overflow:hidden;white-space:nowrap;}
 .alert-inner{display:inline-block;animation:scroll 35s linear infinite;padding-left:100%;}
 @keyframes scroll{0%{transform:translateX(0);}100%{transform:translateX(-100%);}}
-.alert-inner span{color:#ffa500;font-size:13px;font-weight:700;letter-spacing:0.8px;margin-right:80px;}
-.col-heads{display:grid;grid-template-columns:110px 1fr 180px;padding:8px 28px;background:#0d2244;border-bottom:1px solid #162e50;}
-.col-heads span{font-size:11px;font-weight:700;letter-spacing:1.5px;color:#3a6a90;text-transform:uppercase;}
+.alert-inner span{color:#ffa500;font-size:15px;font-weight:700;letter-spacing:0.8px;margin-right:80px;}
+.col-heads{display:grid;grid-template-columns:110px 1fr 180px;padding:10px 32px;background:#0d2244;border-bottom:1px solid #162e50;}
+.col-heads span{font-size:12px;font-weight:700;letter-spacing:1.5px;color:#3a6a90;text-transform:uppercase;}
 .col-heads span:last-child{text-align:center;line-height:1.6;}
-.row{display:grid;grid-template-columns:110px 1fr 180px;align-items:center;padding:0 28px;min-height:80px;border-bottom:1px solid #102035;}
+.row{display:grid;grid-template-columns:110px 1fr 180px;align-items:center;padding:0 32px;min-height:88px;border-bottom:1px solid #102035;}
 .row:nth-child(odd){background:#0d1e38;}
 .row:nth-child(even){background:#0b1a2e;}
 .row.now-row{background:#0a2500 !important;border-left:4px solid #22dd55;border-bottom:1px solid #1a3a10;}
-.line-num{font-size:38px;font-weight:900;color:#fff;}
+.line-num{font-size:42px;font-weight:900;color:#fff;}
 .destination{padding:0 12px;}
-.dest-en{font-size:20px;font-weight:700;color:#fff;}
-.dest-gr{font-size:15px;color:#5a8ab0;margin-top:3px;}
+.dest-en{font-size:22px;font-weight:700;color:#fff;}
+.dest-gr{font-size:16px;color:#5a8ab0;margin-top:3px;}
 .mins-col{text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;}
-.mins-num{font-size:42px;font-weight:900;line-height:1;white-space:nowrap;}
-.mins-now{color:#22dd55;font-size:22px;}
+.mins-num{font-size:46px;font-weight:900;line-height:1;white-space:nowrap;}
+.mins-now{color:#22dd55;font-size:24px;}
 .mins-soon{color:#22dd55;}
 .mins-later{color:#00aaff;}
 .mins-far{color:#5a8ab0;}
-.arrows{display:flex;flex-direction:column;align-items:center;line-height:0.85;color:#22dd55;font-size:26px;animation:bounce 0.6s infinite alternate;}
+.arrows{display:flex;flex-direction:column;align-items:center;line-height:0.85;color:#22dd55;font-size:28px;animation:bounce 0.6s infinite alternate;}
 @keyframes bounce{from{transform:translateY(-3px);}to{transform:translateY(3px);}}
-.footer{margin-top:auto;background:#0d2244;border-top:1px solid #162e50;padding:10px 28px;display:flex;align-items:center;justify-content:space-between;}
-.footer-brand{font-size:12px;color:#3a6a90;font-weight:700;letter-spacing:1px;}
-.live-dot{width:8px;height:8px;border-radius:50%;background:#22dd55;display:inline-block;animation:pulse 2s infinite;}
+.footer{margin-top:auto;background:#0d2244;border-top:1px solid #162e50;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;}
+.footer-brand{font-size:14px;color:#3a6a90;font-weight:700;letter-spacing:1px;}
+.live-dot{width:9px;height:9px;border-radius:50%;background:#22dd55;display:inline-block;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 .page-indicator{display:flex;gap:6px;justify-content:center;padding:8px 0;background:#0b1a2e;}
-.dot{width:8px;height:8px;border-radius:50%;background:#162e50;}
+.dot{width:9px;height:9px;border-radius:50%;background:#162e50;}
 .dot.active{background:#00aaff;}
-.no-buses{text-align:center;padding:60px 28px;color:#3a6a90;font-size:18px;font-weight:700;}
+.no-buses{text-align:center;padding:60px 28px;color:#3a6a90;font-size:20px;font-weight:700;}
 </style>
 </head>
 <body>
@@ -92,15 +92,14 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;min-height:10
 
 <div class="footer">
   <span class="footer-brand">🇨🇾 Cyprus Public Transport · Κυπριακές Δημόσιες Συγκοινωνίες</span>
-  <span><span class="live-dot"></span>&nbsp;<span style="font-size:12px;color:#3a6a90;font-weight:700;">LIVE</span></span>
+  <span><span class="live-dot"></span>&nbsp;<span style="font-size:14px;color:#3a6a90;font-weight:700;">LIVE</span></span>
 </div>
 
 <script>
-// Generate QR code pointing to map page
 new QRCode(document.getElementById("qrcode"), {
   text: "https://papalysandrou.github.io/Cyprus_Bus/map.html",
-  width: 80,
-  height: 80,
+  width: 90,
+  height: 90,
   colorDark: "#0a1628",
   colorLight: "#ffffff",
   correctLevel: QRCode.CorrectLevel.H
@@ -271,7 +270,7 @@ function render() {
     dotsEl.style.display = 'flex';
   } else { dotsEl.style.display = 'none'; }
   if (!visible.length) {
-    document.getElementById('list').innerHTML = '<div class="no-buses">No buses in the next 40 minutes<br><span style="font-size:14px;font-weight:400;color:#3a6a90;">Δεν υπάρχουν λεωφορεία τα επόμενα 40 λεπτά</span></div>';
+    document.getElementById('list').innerHTML = '<div class="no-buses">No buses in the next 40 minutes<br><span style="font-size:16px;font-weight:400;color:#3a6a90;">Δεν υπάρχουν λεωφορεία τα επόμενα 40 λεπτά</span></div>';
     return;
   }
   document.getElementById('list').innerHTML = page.map(b => {
@@ -309,7 +308,8 @@ function tick() {
     String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
   const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('dt').textContent = days[n.getDay()] + ' ' + n.getDate() + ' ' + months[n.getMonth()];
+  document.getElementById('dt').textContent =
+    days[n.getDay()] + ' ' + n.getDate() + ' ' + months[n.getMonth()];
   render();
 }
 
