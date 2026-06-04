@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Larnaka Smart Transit Dashboard</title>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060d1a;
+  --panel:#0a1628;
+  --panel2:#0d1e38;
+  --border:#142240;
+  --blue:#00aaff;
+  --green:#22dd55;
+  --amber:#ffa500;
+  --red:#ff4455;
+  --purple:#a855f7;
+  --text:#e8f0ff;
+  --muted:#4a7fa0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* TOP BAR */
+.topbar{background:linear-gradient(90deg,#060d1a 0%,#0a1f3a 50%,#060d1a 100%);border-bottom:2px solid var(--blue);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-left{display:flex;align-items:center;gap:16px;}
+.city-badge{background:var(--blue);color:#060d1a;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:2px;padding:4px 10px;border-radius:4px;text-transform:uppercase;}
+.topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;letter-spacing:1px;color:#fff;}
+.topbar-title span{color:var(--blue);}
+.topbar-right{display:flex;align-items:center;gap:24px;}
+.live-pill{display:flex;align-items:center;gap:8px;background:#0a2500;border:1px solid var(--green);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;color:var(--green);}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
+.topbar-clock{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--blue);letter-spacing:2px;}
+.topbar-date{font-size:13px;color:var(--muted);text-align:right;margin-top:2px;}
+
+/* ALERT BAR */
+.alert-bar{background:#3a2000;border-bottom:1px solid var(--amber);padding:8px 32px;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--amber);font-weight:600;}
+
+/* MAIN GRID */
+.main{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;grid-template-rows:auto auto auto;gap:16px;}
+
+/* KPI CARDS */
+.kpi-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 22px;position:relative;overflow:hidden;transition:transform 0.2s;}
+.kpi:hover{transform:translateY(-2px);}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi.blue::before{background:var(--blue);}
+.kpi.green::before{background:var(--green);}
+.kpi.amber::before{background:var(--amber);}
+.kpi.red::before{background:var(--red);}
+.kpi.purple::before{background:var(--purple);}
+.kpi-label{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+.kpi-value{font-family:'Barlow Condensed',sans-serif;font-size:42px;font-weight:900;line-height:1;}
+.kpi.blue .kpi-value{color:var(--blue);}
+.kpi.green .kpi-value{color:var(--green);}
+.kpi.amber .kpi-value{color:var(--amber);}
+.kpi.red .kpi-value{color:var(--red);}
+.kpi.purple .kpi-value{color:var(--purple);}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:6px;}
+.kpi-trend{position:absolute;top:18px;right:18px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:4px;}
+.trend-up{background:#22dd5522;color:var(--green);}
+.trend-down{background:#ff445522;color:var(--red);}
+
+/* PANELS */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text);}
+.panel-title span{color:var(--blue);margin-right:8px;}
+.panel-body{padding:20px;}
+
+/* MAP */
+.map-panel{grid-column:1/3;grid-row:2/4;}
+#cityMap{height:420px;width:100%;}
+
+/* CHARTS */
+.chart-panel-a{grid-column:3/5;grid-row:2;}
+.chart-panel-b{grid-column:3/4;grid-row:3;}
+.chart-panel-c{grid-column:4/5;grid-row:3;}
+
+/* STOPS TABLE */
+.stops-panel{grid-column:1/3;grid-row:4;}
+.routes-panel{grid-column:3/5;grid-row:4;}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;}
+.data-table td{padding:10px 12px;border-bottom:1px solid #0d1e38;font-size:13px;}
+.data-table tr:hover td{background:#0d1e38;}
+.data-table tr:last-child td{border-bottom:none;}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.status-good{background:#22dd5515;color:var(--green);border:1px solid #22dd5530;}
+.status-warn{background:#ffa50015;color:var(--amber);border:1px solid #ffa50030;}
+.status-bad{background:#ff445515;color:var(--red);border:1px solid #ff445530;}
+.bar-mini{height:6px;border-radius:3px;margin-top:4px;}
+
+/* GAP ALERT */
+.gap-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;}
+.gap-item:last-child{border-bottom:none;}
+.gap-time{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--red);}
+.gap-label{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* FOOTER */
+.footer{padding:12px 32px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);}
+.footer strong{color:var(--blue);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="city-badge">🇨🇾 Larnaka</div>
+    <div>
+      <div class="topbar-title">Smart Transit <span>Command Centre</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;">Δήμος Λάρνακας — Real-Time Public Transport Intelligence</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-pill"><div class="live-dot"></div> LIVE DATA</div>
+    <div>
+      <div class="topbar-clock" id="dashClock">00:00:00</div>
+      <div class="topbar-date" id="dashDate"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT -->
+<div class="alert-bar">
+  ⚠️ &nbsp;<strong>Service Alert:</strong>&nbsp; Works in Larnaka town centre may cause delays on routes 424 and 425 &nbsp;·&nbsp; Εργασίες στο κέντρο Λάρνακας ενδέχεται να προκαλέσουν καθυστερήσεις στις γραμμές 424 και 425
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi blue">
+      <div class="kpi-label">Passengers Today</div>
+      <div class="kpi-value" id="kpiPassengers">0</div>
+      <div class="kpi-sub">Est. across all Larnaka stops</div>
+      <div class="kpi-trend trend-up">↑ 12%</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Buses Running Now</div>
+      <div class="kpi-value" id="kpiBuses">0</div>
+      <div class="kpi-sub">Active routes in service</div>
+      <div class="kpi-trend trend-up">↑ On schedule</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Avg. Wait Time</div>
+      <div class="kpi-value" id="kpiWait">0<span style="font-size:22px">min</span></div>
+      <div class="kpi-sub">Across all active stops</div>
+      <div class="kpi-trend trend-down">↓ vs 18min target</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Service Gaps</div>
+      <div class="kpi-value" id="kpiGaps">0</div>
+      <div class="kpi-sub">Stops with no bus &gt;30 min</div>
+      <div class="kpi-trend trend-down">↑ Needs attention</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">CO₂ Saved Today</div>
+      <div class="kpi-value" id="kpiCo2">0<span style="font-size:22px">kg</span></div>
+      <div class="kpi-sub">vs equivalent car journeys</div>
+      <div class="kpi-trend trend-up">↑ Green impact</div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="panel map-panel">
+    <div class="panel-header">
+      <div class="panel-title"><span>🗺️</span>Live Stop Network — Larnaka</div>
+      <div style="font-size:12px;color:var(--muted);">Tap any stop for details</div>
+    </div>
+    <div id="cityMap"></div>
+  </div>
+
+  <!-- HOURLY CHART -->
+  <div class="panel chart-panel-a">
+    <div class="panel-header">
+      <div class="panel-title"><span>📈</span>Passenger Flow — Today by Hour</div>
+      <div style="font-size:12px;color:var(--muted);">Peak hours highlighted</div>
+    </div>
+    <div class="panel-body" style="padding:16px;">
+      <canvas id="hourlyChart" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- ROUTE USAGE -->
+  <div class="panel chart-panel-b">
+    <div class="panel-header">
+      <div class="panel-title"><span>🚌</span>Route Usage</div>
+    </div>
+    <div class="panel-body" style="padding:16px;">
+      <canvas id="routeChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- WEEKLY TREND -->
+  <div class="panel chart-panel-c">
+    <div class="panel-header">
+      <div class="panel-title"><span>📅</span>Weekly Trend</div>
+    </div>
+    <div class="panel-body" style="padding:16px;">
+      <canvas id="weekChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- STOPS TABLE -->
+  <div class="panel stops-panel">
+    <div class="panel-header">
+      <div class="panel-title"><span>🚏</span>Stop Performance — All Larnaka Stops</div>
+      <div style="font-size:12px;color:var(--muted);">Sorted by demand</div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Stop Name</th>
+            <th>Passengers Today</th>
+            <th>Next Bus</th>
+            <th>Avg Wait</th>
+            <th>Demand</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="stopsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SERVICE GAPS -->
+  <div class="panel routes-panel">
+    <div class="panel-header">
+      <div class="panel-title"><span>⚠️</span>Service Gap Analysis</div>
+      <div style="font-size:12px;color:var(--red);">Action required</div>
+    </div>
+    <div style="padding:0 0 8px;">
+      <div style="padding:12px 20px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);">
+        Stops where passengers wait more than 30 minutes — potential areas for increased frequency
+      </div>
+      <div id="gapsList"></div>
+    </div>
+    <div style="padding:16px 20px;border-top:1px solid var(--border);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:1px;">RECOMMENDATION ENGINE</div>
+      <div id="recommendations" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>🇨🇾 <strong>Larnaka Smart Transit Dashboard</strong> — Powered by Cyprus Bus Network · Data updates every 60 seconds</span>
+  <span>Built for <strong>Δήμος Λάρνακας</strong> · Prototype v1.0 · <span id="footerTime"></span></span>
+</div>
+
+<script>
+// ── CLOCK ──
+function updateClock(){
+  const n=new Date();
+  const pad=x=>String(x).padStart(2,'0');
+  document.getElementById('dashClock').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dateStr=`${days[n.getDay()]}, ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()}`;
+  document.getElementById('dashDate').textContent=dateStr;
+  document.getElementById('footerTime').textContent=`Last updated ${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+}
+updateClock();
+setInterval(updateClock,1000);
+
+// ── SIMULATED DATA ──
+const now=new Date();
+const hour=now.getHours();
+const basePassengers=Math.round((hour/24)*3200+Math.random()*200);
+const co2=Math.round(basePassengers*0.89);
+
+// Animate KPIs
+function animateValue(id,target,suffix=''){
+  const el=document.getElementById(id);
+  let start=0;
+  const step=target/60;
+  const interval=setInterval(()=>{
+    start=Math.min(start+step,target);
+    const val=Math.round(start);
+    if(id==='kpiWait') el.innerHTML=`${val}<span style="font-size:22px">min</span>`;
+    else if(id==='kpiCo2') el.innerHTML=`${val}<span style="font-size:22px">kg</span>`;
+    else el.textContent=val;
+    if(start>=target) clearInterval(interval);
+  },30);
+}
+
+animateValue('kpiPassengers', basePassengers);
+animateValue('kpiBuses', 7);
+animateValue('kpiWait', 14);
+animateValue('kpiGaps', 3);
+animateValue('kpiCo2', co2);
+
+// ── MAP ──
+const map=L.map('cityMap',{zoomControl:true}).setView([34.9118,33.6356],13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+  attribution:'© OpenStreetMap © CARTO',maxZoom:19
+}).addTo(map);
+
+const stops=[
+  {name:'Nautical Club',gr:'Ναυτικός Όμιλος',lat:34.9118,lng:33.6356,passengers:420,status:'good',nextBus:6,lines:['424','425','711']},
+  {name:'Finikoudes',gr:'Φοινικούδες',lat:34.9175,lng:33.6388,passengers:680,status:'good',nextBus:3,lines:['424','425','419']},
+  {name:'Larnaca Station',gr:'Σταθμός Λάρνακας',lat:34.9200,lng:33.6220,passengers:890,status:'good',nextBus:2,lines:['419','424','425','711','712']},
+  {name:'Larnaca Airport',gr:'Αεροδρόμιο',lat:34.8730,lng:33.6260,passengers:540,status:'good',nextBus:8,lines:['425']},
+  {name:'Mall Metropolis',gr:'Μετρόπολις Μολ',lat:34.9060,lng:33.5870,passengers:310,status:'warn',nextBus:22,lines:['711','712','714','714A']},
+  {name:'Dromolaxia',gr:'Δρομολαξιά',lat:34.8950,lng:33.5990,passengers:95,status:'bad',nextBus:47,lines:['714']},
+  {name:'Aradippou Centre',gr:'Κέντρο Αραδίππου',lat:34.9500,lng:33.5870,passengers:130,status:'bad',nextBus:38,lines:['712']},
+  {name:'Livadia',gr:'Λιβάδια',lat:34.9620,lng:33.6350,passengers:75,status:'bad',nextBus:52,lines:['419']},
+  {name:'Kamares',gr:'Καμάρες',lat:34.9310,lng:33.5780,passengers:160,status:'warn',nextBus:25,lines:['711','712']},
+  {name:'Larnaca Old Town',gr:'Παλιά Πόλη',lat:34.9140,lng:33.6320,passengers:290,status:'good',nextBus:9,lines:['424','425']},
+];
+
+stops.forEach(s=>{
+  const color=s.status==='good'?'#22dd55':s.status==='warn'?'#ffa500':'#ff4455';
+  const size=Math.max(12,Math.min(26,s.passengers/40));
+  const icon=L.divIcon({
+    html:`<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 10px ${color}88;display:flex;align-items:center;justify-content:center;"></div>`,
+    className:'',iconSize:[size,size],iconAnchor:[size/2,size/2]
+  });
+  L.marker([s.lat,s.lng],{icon})
+    .addTo(map)
+    .bindPopup(`
+      <div style="font-family:'Barlow',sans-serif;min-width:180px;">
+        <div style="font-weight:900;font-size:15px;margin-bottom:4px;">🚏 ${s.name}</div>
+        <div style="font-size:12px;color:#666;margin-bottom:8px;">${s.gr}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+          <div><b style="color:#00aaff">${s.passengers}</b><br>passengers today</div>
+          <div><b style="color:${color}">${s.nextBus} min</b><br>next bus</div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:#888;">Lines: ${s.lines.join(', ')}</div>
+      </div>
+    `);
+});
+
+// ── HOURLY CHART ──
+const hours=Array.from({length:hour+1},(_,i)=>i+':00');
+const hourlyData=hours.map((_,i)=>{
+  const peak=(i>=7&&i<=9)||(i>=16&&i<=18);
+  const base=peak?280:120;
+  return Math.round(base+Math.random()*80);
+});
+const hourlyColors=hourlyData.map((_,i)=>{
+  const peak=(i>=7&&i<=9)||(i>=16&&i<=18);
+  return peak?'rgba(0,170,255,0.9)':'rgba(0,170,255,0.35)';
+});
+
+new Chart(document.getElementById('hourlyChart'),{
+  type:'bar',
+  data:{
+    labels:hours,
+    datasets:[{
+      label:'Passengers',
+      data:hourlyData,
+      backgroundColor:hourlyColors,
+      borderRadius:4,
+      borderSkipped:false,
+    }]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} passengers`}}},
+    scales:{
+      x:{ticks:{color:'#4a7fa0',font:{size:10}},grid:{color:'#142240'}},
+      y:{ticks:{color:'#4a7fa0',font:{size:10}},grid:{color:'#142240'}}
+    }
+  }
+});
+
+// ── ROUTE CHART ──
+new Chart(document.getElementById('routeChart'),{
+  type:'doughnut',
+  data:{
+    labels:['424','425','419','711','712','714','714A'],
+    datasets:[{
+      data:[28,24,14,12,10,8,4],
+      backgroundColor:['#00aaff','#22dd55','#ffa500','#a855f7','#ff4455','#00ccaa','#ffdd00'],
+      borderWidth:0,
+      hoverOffset:6
+    }]
+  },
+  options:{
+    responsive:true,
+    cutout:'65%',
+    plugins:{
+      legend:{position:'right',labels:{color:'#4a7fa0',font:{size:11},boxWidth:12,padding:8}},
+      tooltip:{callbacks:{label:ctx=>`Route ${ctx.label}: ${ctx.raw}% of trips`}}
+    }
+  }
+});
+
+// ── WEEKLY CHART ──
+new Chart(document.getElementById('weekChart'),{
+  type:'line',
+  data:{
+    labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    datasets:[
+      {label:'This week',data:[2800,3100,2950,3200,3400,2100,1600],borderColor:'#00aaff',backgroundColor:'rgba(0,170,255,0.1)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#00aaff'},
+      {label:'Last week',data:[2600,2900,2800,3000,3100,1900,1400],borderColor:'#4a7fa0',backgroundColor:'transparent',tension:0.4,borderDash:[4,4],pointRadius:3,pointBackgroundColor:'#4a7fa0'}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{labels:{color:'#4a7fa0',font:{size:11},boxWidth:12}}},
+    scales:{
+      x:{ticks:{color:'#4a7fa0',font:{size:10}},grid:{color:'#142240'}},
+      y:{ticks:{color:'#4a7fa0',font:{size:10}},grid:{color:'#142240'}}
+    }
+  }
+});
+
+// ── STOPS TABLE ──
+const sortedStops=[...stops].sort((a,b)=>b.passengers-a.passengers);
+document.getElementById('stopsTable').innerHTML=sortedStops.map(s=>{
+  const statusClass=s.status==='good'?'status-good':s.status==='warn'?'status-warn':'status-bad';
+  const statusText=s.status==='good'?'Good service':s.status==='warn'?'Low frequency':'Service gap';
+  const barColor=s.status==='good'?'#22dd55':s.status==='warn'?'#ffa500':'#ff4455';
+  const barW=Math.round((s.passengers/890)*100);
+  return `<tr>
+    <td><strong>${s.name}</strong><br><span style="font-size:11px;color:var(--muted)">${s.gr}</span></td>
+    <td>
+      <strong>${s.passengers}</strong>
+      <div class="bar-mini" style="background:${barColor};width:${barW}%;"></div>
+    </td>
+    <td style="color:${s.nextBus<10?'#22dd55':s.nextBus<30?'#00aaff':'#ff4455'};font-weight:700;">${s.nextBus} min</td>
+    <td>${Math.round(s.nextBus*0.6)} min</td>
+    <td style="color:var(--muted);font-size:12px;">${s.lines.join(', ')}</td>
+    <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+  </tr>`;
+}).join('');
+
+// ── GAPS LIST ──
+const gapStops=stops.filter(s=>s.status!=='good').sort((a,b)=>b.nextBus-a.nextBus);
+document.getElementById('gapsList').innerHTML=gapStops.map(s=>{
+  const color=s.status==='warn'?'var(--amber)':'var(--red)';
+  return `<div class="gap-item">
+    <div>
+      <strong style="font-size:14px;">${s.name}</strong>
+      <div class="gap-label">${s.gr} · Lines: ${s.lines.join(', ')}</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="gap-time" style="color:${color}">${s.nextBus}min</div>
+      <div class="gap-label">next bus</div>
+    </div>
+  </div>`;
+}).join('');
+
+// ── RECOMMENDATIONS ──
+const recs=[
+  {icon:'🔴',text:'Increase frequency on route 714 serving Dromolaxia — current wait: 47 min',priority:'High'},
+  {icon:'🟠',text:'Add early morning service to Livadia — no buses before 7:00 AM',priority:'Medium'},
+  {icon:'🟡',text:'Route 712 to Aradippou needs additional midday departure (12:00–14:00 gap)',priority:'Medium'},
+];
+document.getElementById('recommendations').innerHTML=recs.map(r=>`
+  <div style="display:flex;align-items:flex-start;gap:10px;background:var(--panel2);border-radius:8px;padding:10px 12px;font-size:12px;">
+    <span style="font-size:16px;flex-shrink:0;">${r.icon}</span>
+    <div>
+      <div style="color:var(--text);margin-bottom:2px;">${r.text}</div>
+      <div style="color:var(--muted);">Priority: <strong style="color:${r.priority==='High'?'var(--red)':r.priority==='Medium'?'var(--amber)':'var(--green)'}">${r.priority}</strong></div>
+    </div>
+  </div>
+`).join('');
+</script>
+</body>
+</html>
