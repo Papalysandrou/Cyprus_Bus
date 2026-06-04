@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Live Bus Map — Larnaka Nautical Club</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.top-bar{background:#0d2244;border-bottom:3px solid #00aaff;padding:12px 16px;}
+.top-bar h1{color:#fff;font-size:16px;font-weight:900;letter-spacing:0.5px;}
+.top-bar small{display:block;font-size:11px;color:#5a8ab0;margin-top:2px;}
+.filters{display:flex;gap:8px;padding:10px 16px;background:#0a1628;overflow-x:auto;flex-shrink:0;border-bottom:1px solid #162e50;}
+.filters::-webkit-scrollbar{display:none;}
+.filter-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid #2a4a7f;background:transparent;color:#5a8ab0;font-family:'Arial Black',Arial,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.filter-btn.active{background:#00aaff;border-color:#00aaff;color:#0a1628;}
+.filter-btn:hover{border-color:#00aaff;color:#00aaff;}
+#map{flex:1;}
+.legend{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#0d2244ee;border:1px solid #162e50;border-radius:10px;padding:10px 16px;display:flex;gap:16px;z-index:1000;backdrop-filter:blur(4px);}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#5a8ab0;font-weight:700;}
+.legend-dot{width:12px;height:12px;border-radius:50%;}
+.no-buses-msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#0d2244ee;border:1px solid #162e50;border-radius:10px;padding:20px 24px;text-align:center;z-index:1000;color:#5a8ab0;font-size:14px;font-weight:700;display:none;}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>🚌 Live Bus Tracker — Larnaka Nautical Club</h1>
+  <small>Λάρνακα — Ναυτικός Όμιλος · Tap a bus line to filter</small>
+</div>
+
+<div class="filters" id="filters">
+  <button class="filter-btn active" onclick="setFilter('ALL')">🚌 All Buses</button>
+</div>
+
+<div id="map"></div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#22dd55"></div> &lt; 5 min</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#00aaff"></div> 5–20 min</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#5a8ab0"></div> 20–40 min</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> Stop</div>
+</div>
+
+<div class="no-buses-msg" id="noBusMsg">No buses in the next 40 minutes<br><span style="font-size:12px;font-weight:400;">Δεν υπάρχουν λεωφορεία</span></div>
+
+<script>
+// Nautical Club stop coordinates
+const STOP_LAT = 34.9118;
+const STOP_LNG = 33.6356;
+
+// Approximate route waypoints FROM stop outward for each line
+// These are real Larnaka road coordinates spreading outward from the Nautical Club
+const routeDirections = {
+  '419': { lat: 34.9200, lng: 33.6230 }, // toward city center/station
+  '424': { lat: 34.9195, lng: 33.6210 },
+  '425_station': { lat: 34.9190, lng: 33.6220 },
+  '425_airport': { lat: 34.8750, lng: 33.6270 }, // toward airport (south)
+  '711': { lat: 34.9050, lng: 33.5900 }, // toward Mall Metropolis (west)
+  '712': { lat: 34.9060, lng: 33.5880 },
+  '714': { lat: 34.9070, lng: 33.5870 },
+  '714A':{ lat: 34.9080, lng: 33.5860 },
+};
+
+const rawSchedule = [
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419', 7,3],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419', 8,5],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419', 9,23],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',10,33],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',11,44],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',13,24],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',14,33],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',15,43],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',16,49],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',17,58],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',19,3],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',20,11],
+  ['419','Larnaca Station','Σταθμός Λάρνακας','419',21,37],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424', 7,16],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424', 7,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424', 8,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424', 8,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424', 9,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424', 9,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',10,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',10,45],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',11,16],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',11,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',12,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',12,45],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',13,16],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',13,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',14,16],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',14,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',15,16],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',15,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',16,16],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',16,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',17,16],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',17,46],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',18,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',18,45],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',19,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',19,45],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',20,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',20,45],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',21,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',21,44],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',22,15],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',22,45],
+  ['424','Larnaca Station','Σταθμός Λάρνακας','424',23,15],
+  ['425','Larnaca Station','Σταθμός Λάρνακας','425_station', 0,10],
+  ['425','Larnaca Station','Σταθμός Λάρνακας','425_station', 0,40],
+  ['425','Larnaca Station','Σταθμός Λάρνακας','425_station', 1,10],
+  ['425','Larnaca Station','Σταθμός Λάρνακας','425_station',15,12],
+  ['425','Larnaca Station','Σταθμός Λάρνακας','425_station',15,42],
+  ['425','Larnaca Station','Σταθμός Λάρνακας','425_station',16,12],
+  ['425','Larnaca Station','Σταθμός Λάρνακας','425_station',16,42],
+  ['425','Larnaca Station','Σταθμός Λάρνακας','425_station',23,40],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport', 7,41],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport', 8,10],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport', 8,42],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport', 9,11],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport', 9,40],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',10,11],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',10,41],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',11,11],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',11,41],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',12,11],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',12,41],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',13,11],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',13,41],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',14,10],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',14,45],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',17,11],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',17,41],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',18,11],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',18,41],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',19,11],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',19,40],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',20,10],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',20,40],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',21,8],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',21,40],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',22,10],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',22,40],
+  ['425','Larnaka Airport','Αεροδρόμιο Λάρνακας','425_airport',23,8],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711', 7,9],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711', 9,12],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711',10,2],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711',11,42],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711',12,27],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711',14,57],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711',16,8],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711',17,32],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711',18,53],
+  ['711','Mall Metropolis','Μετρόπολις Μολ','711',20,29],
+  ['712','Mall Metropolis','Μετρόπολις Μολ','712', 7,18],
+  ['712','Mall Metropolis','Μετρόπολις Μολ','712', 9,33],
+  ['712','Mall Metropolis','Μετρόπολις Μολ','712',10,5],
+  ['712','Mall Metropolis','Μετρόπολις Μολ','712',12,25],
+  ['712','Mall Metropolis','Μετρόπολις Μολ','712',13,44],
+  ['712','Mall Metropolis','Μετρόπολις Μολ','712',15,44],
+  ['712','Mall Metropolis','Μετρόπολις Μολ','712',17,41],
+  ['712','Mall Metropolis','Μετρόπολις Μολ','712',20,44],
+  ['714','Mall Metropolis','Μετρόπολις Μολ','714', 9,14],
+  ['714','Mall Metropolis','Μετρόπολις Μολ','714',10,57],
+  ['714','Mall Metropolis','Μετρόπολις Μολ','714',12,19],
+  ['714','Mall Metropolis','Μετρόπολις Μολ','714',15,42],
+  ['714','Mall Metropolis','Μετρόπολις Μολ','714',17,42],
+  ['714','Mall Metropolis','Μετρόπολις Μολ','714',20,15],
+  ['714A','Mall Metropolis','Μετρόπολις Μολ','714A', 7,3],
+];
+
+const schedule = rawSchedule.map(r => ({
+  line:r[0], en:r[1], gr:r[2], routeKey:r[3], h:r[4], m:r[5]
+}));
+
+let activeFilter = 'ALL';
+let busMarkers = [];
+let map;
+
+function getMinsUntil(h, m) {
+  const now = new Date();
+  const then = new Date(now);
+  then.setHours(h, m, 0, 0);
+  return (then - now) / 60000;
+}
+
+function getBusPosition(routeKey, mins) {
+  const dir = routeDirections[routeKey] || routeDirections['424'];
+  // Interpolate: at 0 mins = at stop, at 40 mins = at full direction point
+  const ratio = Math.min(mins / 40, 1);
+  const lat = STOP_LAT + (dir.lat - STOP_LAT) * ratio;
+  const lng = STOP_LNG + (dir.lng - STOP_LNG) * ratio;
+  return [lat, lng];
+}
+
+function getColor(mins) {
+  if (mins < 5) return '#22dd55';
+  if (mins < 20) return '#00aaff';
+  return '#5a8ab0';
+}
+
+function makeBusIcon(line, mins) {
+  const color = getColor(mins);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44">
+    <circle cx="22" cy="22" r="20" fill="${color}" opacity="0.25"/>
+    <circle cx="22" cy="22" r="14" fill="${color}"/>
+    <text x="22" y="27" text-anchor="middle" font-family="Arial Black,Arial" font-size="${line.length>3?8:10}" font-weight="900" fill="#0a1628">${line}</text>
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    className: '',
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    popupAnchor: [0, -22]
+  });
+}
+
+function getVisible() {
+  return schedule
+    .map(b => ({ ...b, mins: getMinsUntil(b.h, b.m) }))
+    .filter(b => b.mins > -1 && b.mins < 40)
+    .filter(b => activeFilter === 'ALL' || b.line === activeFilter)
+    .sort((a, b) => a.mins - b.mins);
+}
+
+function buildFilters() {
+  const lines = [...new Set(schedule.map(b => b.line))].sort();
+  const bar = document.getElementById('filters');
+  lines.forEach(line => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.textContent = line;
+    btn.onclick = () => setFilter(line);
+    bar.appendChild(btn);
+  });
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === f || (f==='ALL' && b.textContent==='🚌 All Buses'));
+  });
+  updateMarkers();
+}
+
+function updateMarkers() {
+  busMarkers.forEach(m => map.removeLayer(m));
+  busMarkers = [];
+
+  const visible = getVisible();
+  document.getElementById('noBusMsg').style.display = visible.length ? 'none' : 'block';
+
+  visible.forEach(b => {
+    const pos = getBusPosition(b.routeKey, b.mins);
+    const minsText = b.mins < 1 ? 'NOW' : Math.round(b.mins) + ' min';
+    const marker = L.marker(pos, { icon: makeBusIcon(b.line, b.mins) })
+      .addTo(map)
+      .bindPopup(`<b style="font-size:15px">Bus ${b.line}</b><br>${b.en}<br>${b.gr}<br><b style="color:${getColor(b.mins)}">${minsText}</b>`);
+    busMarkers.push(marker);
+  });
+}
+
+// Init map
+map = L.map('map', { zoomControl: true }).setView([STOP_LAT, STOP_LNG], 14);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO',
+  maxZoom: 19
+}).addTo(map);
+
+// Stop marker
+const stopIcon = L.divIcon({
+  html: `<div style="background:#ff4444;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px #ff4444;"></div>`,
+  className: '', iconSize:[16,16], iconAnchor:[8,8]
+});
+L.marker([STOP_LAT, STOP_LNG], {icon: stopIcon})
+  .addTo(map)
+  .bindPopup('<b>🚏 Nautical Club Stop</b><br>Ναυτικός Όμιλος');
+
+buildFilters();
+updateMarkers();
+setInterval(updateMarkers, 30000);
+</script>
+</body>
+</html>
