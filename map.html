@@ -18,9 +18,9 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;display:flex;
 .filter-btn.active{background:#00aaff;border-color:#00aaff;color:#0a1628;}
 .filter-btn:hover{border-color:#00aaff;color:#00aaff;}
 #map{flex:1;}
-.legend{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#0d2244ee;border:1px solid #162e50;border-radius:10px;padding:10px 16px;display:flex;gap:16px;z-index:1000;backdrop-filter:blur(4px);}
-.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#5a8ab0;font-weight:700;}
-.legend-dot{width:12px;height:12px;border-radius:50%;}
+.legend{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#0d2244ee;border:1px solid #162e50;border-radius:10px;padding:10px 20px;display:flex;gap:20px;z-index:1000;backdrop-filter:blur(4px);white-space:nowrap;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#5a8ab0;font-weight:700;white-space:nowrap;}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
 .no-buses-msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#0d2244ee;border:1px solid #162e50;border-radius:10px;padding:20px 24px;text-align:center;z-index:1000;color:#5a8ab0;font-size:14px;font-weight:700;display:none;}
 </style>
 </head>
@@ -38,7 +38,7 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;display:flex;
 <div id="map"></div>
 
 <div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#22dd55"></div> &lt; 5 min</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#22dd55"></div> &lt;5 min</div>
   <div class="legend-item"><div class="legend-dot" style="background:#00aaff"></div> 5–20 min</div>
   <div class="legend-item"><div class="legend-dot" style="background:#5a8ab0"></div> 20–40 min</div>
   <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> Stop</div>
@@ -47,21 +47,18 @@ body{background:#0b1a2e;font-family:'Arial Black',Arial,sans-serif;display:flex;
 <div class="no-buses-msg" id="noBusMsg">No buses in the next 40 minutes<br><span style="font-size:12px;font-weight:400;">Δεν υπάρχουν λεωφορεία</span></div>
 
 <script>
-// Nautical Club stop coordinates
 const STOP_LAT = 34.9118;
 const STOP_LNG = 33.6356;
 
-// Approximate route waypoints FROM stop outward for each line
-// These are real Larnaka road coordinates spreading outward from the Nautical Club
 const routeDirections = {
-  '419': { lat: 34.9200, lng: 33.6230 }, // toward city center/station
-  '424': { lat: 34.9195, lng: 33.6210 },
-  '425_station': { lat: 34.9190, lng: 33.6220 },
-  '425_airport': { lat: 34.8750, lng: 33.6270 }, // toward airport (south)
-  '711': { lat: 34.9050, lng: 33.5900 }, // toward Mall Metropolis (west)
-  '712': { lat: 34.9060, lng: 33.5880 },
-  '714': { lat: 34.9070, lng: 33.5870 },
-  '714A':{ lat: 34.9080, lng: 33.5860 },
+  '419':          { lat: 34.9200, lng: 33.6230 },
+  '424':          { lat: 34.9195, lng: 33.6210 },
+  '425_station':  { lat: 34.9190, lng: 33.6220 },
+  '425_airport':  { lat: 34.8750, lng: 33.6270 },
+  '711':          { lat: 34.9050, lng: 33.5900 },
+  '712':          { lat: 34.9060, lng: 33.5880 },
+  '714':          { lat: 34.9070, lng: 33.5870 },
+  '714A':         { lat: 34.9080, lng: 33.5860 },
 };
 
 const rawSchedule = [
@@ -191,11 +188,11 @@ function getMinsUntil(h, m) {
 
 function getBusPosition(routeKey, mins) {
   const dir = routeDirections[routeKey] || routeDirections['424'];
-  // Interpolate: at 0 mins = at stop, at 40 mins = at full direction point
   const ratio = Math.min(mins / 40, 1);
-  const lat = STOP_LAT + (dir.lat - STOP_LAT) * ratio;
-  const lng = STOP_LNG + (dir.lng - STOP_LNG) * ratio;
-  return [lat, lng];
+  return [
+    STOP_LAT + (dir.lat - STOP_LAT) * ratio,
+    STOP_LNG + (dir.lng - STOP_LNG) * ratio
+  ];
 }
 
 function getColor(mins) {
@@ -211,13 +208,7 @@ function makeBusIcon(line, mins) {
     <circle cx="22" cy="22" r="14" fill="${color}"/>
     <text x="22" y="27" text-anchor="middle" font-family="Arial Black,Arial" font-size="${line.length>3?8:10}" font-weight="900" fill="#0a1628">${line}</text>
   </svg>`;
-  return L.divIcon({
-    html: svg,
-    className: '',
-    iconSize: [44, 44],
-    iconAnchor: [22, 22],
-    popupAnchor: [0, -22]
-  });
+  return L.divIcon({ html:svg, className:'', iconSize:[44,44], iconAnchor:[22,22], popupAnchor:[0,-22] });
 }
 
 function getVisible() {
@@ -251,10 +242,8 @@ function setFilter(f) {
 function updateMarkers() {
   busMarkers.forEach(m => map.removeLayer(m));
   busMarkers = [];
-
   const visible = getVisible();
   document.getElementById('noBusMsg').style.display = visible.length ? 'none' : 'block';
-
   visible.forEach(b => {
     const pos = getBusPosition(b.routeKey, b.mins);
     const minsText = b.mins < 1 ? 'NOW' : Math.round(b.mins) + ' min';
@@ -265,19 +254,16 @@ function updateMarkers() {
   });
 }
 
-// Init map
-map = L.map('map', { zoomControl: true }).setView([STOP_LAT, STOP_LNG], 14);
+map = L.map('map', { zoomControl:true }).setView([STOP_LAT, STOP_LNG], 14);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO',
-  maxZoom: 19
+  attribution:'© OpenStreetMap © CARTO', maxZoom:19
 }).addTo(map);
 
-// Stop marker
 const stopIcon = L.divIcon({
-  html: `<div style="background:#ff4444;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px #ff4444;"></div>`,
-  className: '', iconSize:[16,16], iconAnchor:[8,8]
+  html:`<div style="background:#ff4444;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px #ff4444;"></div>`,
+  className:'', iconSize:[16,16], iconAnchor:[8,8]
 });
-L.marker([STOP_LAT, STOP_LNG], {icon: stopIcon})
+L.marker([STOP_LAT, STOP_LNG], {icon:stopIcon})
   .addTo(map)
   .bindPopup('<b>🚏 Nautical Club Stop</b><br>Ναυτικός Όμιλος');
 
